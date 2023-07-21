@@ -1,5 +1,7 @@
 import { HfInference } from '@huggingface/inference'
 import { NextResponse } from 'next/server'
+import { increaseApiLimit, checkApiLimit } from '../../../lib/api-limit'
+
 
 const hf = new HfInference(process.env.HUGGINGFACE_API_KEY)
 
@@ -9,7 +11,13 @@ export async function POST(req) {
     try {
         const body = await req.json()
         const {messages} = body;
-        console.log(messages)
+        
+        const freeTrial = await checkApiLimit();
+
+        if(!freeTrial) {
+            return new NextResponse("Api limit reached", {status: 403})
+        }
+
         let history = [""];
         let generated = [""];
         const response = await hf.conversational({
@@ -20,6 +28,8 @@ export async function POST(req) {
             text: `${messages}`
         }
         });
+
+        await increaseApiLimit()
     
     return NextResponse.json(response)
     } catch (error) {

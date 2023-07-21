@@ -1,7 +1,7 @@
 "use client"
 import axios from 'axios'
 import * as z from "zod"
-import { MessageSquare } from "lucide-react"
+import { Code} from "lucide-react"
 import Heading from "../../../../components/heading"
 import { useForm } from "react-hook-form"
 import { formSchema } from "./constants"
@@ -16,10 +16,11 @@ import Loader from '../../../../components/loader'
 import { cn } from '../../../../@/lib/utils'
 import BotAvatar from '../../../../components/bot-avatar'
 import UserAvatar from '../../../../components/user-avatar'
+import ReactMarkdown from "react-markdown"
 
 
 
-const ConversationPage = () => {
+const CodePage = () => {
     const router = useRouter()
 
     const [response, setResponse] = useState([{}])
@@ -36,8 +37,8 @@ const ConversationPage = () => {
 
     const onSubmit = async (values) => {
         try {
-            const response = await axios.post("/api/conversation", {messages: values.prompt})
-            // console.log(response.data.generated_text)
+            const response = await axios.post("/api/code", {messages: values.prompt})
+            // console.log(response.data)
             setResponse((current) => [...current, {'user': values.prompt, 'bot': response.data.generated_text}])
 
             form.reset();
@@ -53,11 +54,11 @@ const ConversationPage = () => {
   return (
     <div>
         <Heading
-        title="Conversation"
-        description="Our most advanced conversation model."
-        Icon={MessageSquare}
-        iconColor="text-violet-500"
-        bgColor="bg-violet-500/10"
+        title="Code Generation"
+        description="Generate code using descriptive text."
+        Icon={Code}
+        iconColor="text-green-700"
+        bgColor="bg-green-700/10"
         />
         <div className="px-4 lg:px-8">
         <div>
@@ -85,7 +86,7 @@ const ConversationPage = () => {
                       <Input
                         className="border-0 outline-none focus-visible:ring-0 focus-visible:ring-transparent"
                         disabled={isLoading} 
-                        placeholder="How do I calculate the radius of a circle?" 
+                        placeholder="Simple toggle button using react hooks." 
                         {...field}
                       />
                     </FormControl>
@@ -124,9 +125,22 @@ const ConversationPage = () => {
                    className={"p-8 w-full flex items-start gap-x-8 rounded-lg bg-muted"}
                    >
                     <BotAvatar />
-                    <p className='text-sm'>
-                    {res.bot}
-                    </p>
+                    <ReactMarkdown
+                    components={{
+                      pre: ({node, ...props}) => (
+                        <div className='overflow-auto w-full my-2 bg-black/10 p-2 rounded-lg'>
+                          <pre {...props}/>
+                        </div>
+                      ),
+                      code: ({node, ...props}) => (
+                        <code className="bg-black/10 rounded-lg p-1" {...props}/>
+                      )
+                    }}
+                    className='text-sm overflow-hidden leading-7'
+                    >
+                    {res.bot || ""}
+                    </ReactMarkdown>
+                    
                    </div> 
                 </>
                 ))}
@@ -137,4 +151,4 @@ const ConversationPage = () => {
   )
 }
 
-export default ConversationPage
+export default CodePage

@@ -1,7 +1,7 @@
 "use client"
 import axios from 'axios'
 import * as z from "zod"
-import { MessageSquare } from "lucide-react"
+import { Download, ImageIcon} from "lucide-react"
 import Heading from "../../../../components/heading"
 import { useForm } from "react-hook-form"
 import { formSchema } from "./constants"
@@ -16,18 +16,24 @@ import Loader from '../../../../components/loader'
 import { cn } from '../../../../@/lib/utils'
 import BotAvatar from '../../../../components/bot-avatar'
 import UserAvatar from '../../../../components/user-avatar'
+import { Card, CardFooter } from '../../../../components/ui/card'
+import Image from 'next/image'
 
 
 
-const ConversationPage = () => {
+const ImagePage = () => {
     const router = useRouter()
+    const [image_, setImage_] = useState("");
+    const [prompt, setPrompt] = useState("")
 
-    const [response, setResponse] = useState([{}])
+    
 
     const form = useForm({
         resolver: zodResolver(formSchema),
         defaultValues: {
-            prompt: ""
+            prompt: "",
+            amount: "1",
+            resolution: "512x512"
         }
     })
 
@@ -36,10 +42,10 @@ const ConversationPage = () => {
 
     const onSubmit = async (values) => {
         try {
-            const response = await axios.post("/api/conversation", {messages: values.prompt})
-            // console.log(response.data.generated_text)
-            setResponse((current) => [...current, {'user': values.prompt, 'bot': response.data.generated_text}])
-
+          setImage_("")
+            const response = await axios.post("/api/image", {prompt: values.prompt})
+            setImage_(response.data.imageUrl)
+            setPrompt(values.prompt)
             form.reset();
         } catch (error) {
             console.log(error)
@@ -53,11 +59,11 @@ const ConversationPage = () => {
   return (
     <div>
         <Heading
-        title="Conversation"
-        description="Our most advanced conversation model."
-        Icon={MessageSquare}
-        iconColor="text-violet-500"
-        bgColor="bg-violet-500/10"
+        title="Image Generation"
+        description="Turn your prompt into an image"
+        Icon={ImageIcon}
+        iconColor="text-pink-700"
+        bgColor="bg-pink-700/10"
         />
         <div className="px-4 lg:px-8">
         <div>
@@ -99,42 +105,31 @@ const ConversationPage = () => {
           </Form>
         </div>
         <div className="space-y-4 mt-4">
-                    {isLoading && (
-                        <div className='p-8 rounded-lg w-full flex items-center justify-center bg-muted'><Loader /></div>
-                    )}
+            {isLoading && (
+                <div className='p-20'><Loader /></div>
+            )}
+        </div>
+        { image_ && (
+          
+           <div className='h-full flex flex-col gap-y-4 items-center'>
+              <Card className='rounded-lg overflow-hidden'>
+                <div className='relative aspect-square'>
+                <Image width={512} height={512} alt="Uploaded Image"  src={`data:image/jpg;base64,${image_}`}/>
+                </div>
+                <CardFooter className='p-2'>
+                  <p className='w-full text-sm text-muted-foreground' >
+                    Prompt: {prompt}
+                  </p>
+                </CardFooter>
+              </Card>
+           </div>
+        
+        )
 
-                    
-        </div>
-        <div className="space-y-4 mt-4">
-            {response.length === 0 && !isLoading && ( <Empty label="No conversation started." />)}
-            <div className='flex flex-col-reverse gap-y-4'>
-                {response.map((res) => (
-                    <>
-                   <div 
-                   key={res.user}
-                   className={"p-8 w-full flex items-start gap-x-8 rounded-lg bg-white border border-black/10"}
-                   >
-                    <UserAvatar />
-                    <p className='text-sm'>
-                    {res.user}
-                    </p>
-                   </div> 
-                   <div 
-                   key={res.bot}
-                   className={"p-8 w-full flex items-start gap-x-8 rounded-lg bg-muted"}
-                   >
-                    <BotAvatar />
-                    <p className='text-sm'>
-                    {res.bot}
-                    </p>
-                   </div> 
-                </>
-                ))}
-            </div>
-        </div>
+        }
         </div>
     </div>
   )
 }
 
-export default ConversationPage
+export default ImagePage
